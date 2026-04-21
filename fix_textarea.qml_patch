@@ -1,0 +1,41 @@
+--- qml/main.qml
++++ qml/main.qml
+@@ -324,24 +324,15 @@
+ 
+                             property bool isUpdatingContent: false
+ 
+-                            Component.onCompleted: {
+-                                isUpdatingContent = true
+-                                editorArea.text = backend.docManager.currentContent
+-                                isUpdatingContent = false
+-                            }
+-
+-                            Connections {
+-                                target: backend.docManager
+-                                function onCurrentContentChanged() {
+-                                    if (editorArea.text !== backend.docManager.currentContent) {
+-                                        editorArea.isUpdatingContent = true
+-                                        let c = editorArea.cursorPosition
+-                                        editorArea.text = backend.docManager.currentContent
+-                                        editorArea.cursorPosition = Math.min(c, editorArea.text.length)
+-                                        editorArea.isUpdatingContent = false
+-                                    }
+-                                }
+-                            }
++                            // Use declarative binding for clean sync
++                            text: backend.docManager.currentContent
++                            
+                             onTextChanged: {
+-                                if (isUpdatingContent) return;
+-
+-                                if (text !== backend.docManager.currentContent) {
+-                                    backend.docManager.currentContent = text
+-                                }
++                                // Only sync BACK to C++ if the user is actively engaged
++                                // with the editor (typing, pasting, interacting).
++                                // This prevents tab-switching from accidentally erasing C++ state.
++                                if (editorArea.activeFocus) {
++                                    if (text !== backend.docManager.currentContent) {
++                                        backend.docManager.currentContent = text
++                                    }
++                                }
